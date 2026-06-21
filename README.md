@@ -1,19 +1,96 @@
 # TelerikKendoDemo
 
-Kurumsal İnsan Kaynakları Yönetim Sistemi referans uygulaması. ASP.NET Core 8 MVC, Clean Architecture, PostgreSQL, Entity Framework Core ve Telerik Kendo UI bileşenleri ile geliştirilmiştir.
+[build_status_badge] [dotnet8_badge] [postgresql_badge] [telerik_badge] [license_badge]
+
+> **GitHub portföy referans projesi** — Kurumsal yazılım geliştirme yaklaşımını, **Telerik UI for ASP.NET Core** kullanımını, **PostgreSQL** entegrasyonunu, **multi-tenant** mimariyi ve **Clean Architecture** prensiplerini uçtan uca sergilemek amacıyla geliştirilmiş açık kaynak bir İnsan Kaynakları yönetim uygulamasıdır.
+
+ASP.NET Core 8 MVC, Entity Framework Core, FluentValidation, Serilog ve Telerik Kendo UI bileşenleri ile inşa edilmiş; yalnızca çalışan bir demo değil, gerçek kurumsal SaaS senaryolarına yakın bir referans kod tabanı sunar.
+
+---
+
+## Öne Çıkan Özellikler
+
+- ASP.NET Core 8 MVC
+- Clean Architecture
+- Multi Tenant Yapı
+- PostgreSQL
+- Entity Framework Core
+- Telerik UI for ASP.NET Core
+- Kendo Grid
+- Kendo Scheduler
+- Kendo TreeView
+- Kendo Chart
+- Docker Destekli Geliştirme Ortamı
+- FluentValidation
+- Serilog
+- Unit Test Altyapısı
+
+---
 
 ## Proje Hakkında
 
-TelerikKendoDemo, kurumsal SaaS mantığında çok firmalı (multi-tenant) bir İK yönetim platformunu örnekler. Proje yalnızca çalışan bir demo değil; gerçek kurumsal yazılım geliştirme pratiklerini, katmanlı mimariyi ve modern .NET ekosistemini göstermek için tasarlanmıştır.
+TelerikKendoDemo, kurumsal SaaS mantığında çok firmalı (multi-tenant) bir İK yönetim platformunu örnekler. Katmanlı mimari, SOLID prensipleri, merkezi hata yönetimi ve modern .NET ekosistemi bir arada değerlendirilebilir.
 
-Uygulama modülleri:
+**Uygulama modülleri:**
 
-- **Dashboard** — Özet metrikler, grafikler ve performans göstergeleri
-- **Personel Yönetimi** — Grid tabanlı CRUD, fotoğraf yükleme, yetkinlik ataması
-- **Departman Yönetimi** — Hiyerarşik TreeView yapısı
-- **İzin Yönetimi** — Scheduler tabanlı izin takvimi
+| Modül | Açıklama |
+|-------|----------|
+| **Dashboard** | Özet metrikler, grafikler ve performans göstergeleri |
+| **Personel Yönetimi** | Grid tabanlı CRUD, fotoğraf yükleme, yetkinlik ataması |
+| **Departman Yönetimi** | Hiyerarşik TreeView yapısı |
+| **İzin Yönetimi** | Scheduler tabanlı izin takvimi |
 
 Tüm kullanıcı arayüzü Türkçedir.
+
+---
+
+## Ekran Görüntüleri
+
+### Dashboard
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+Toplam ve aktif çalışan sayıları, departman dağılım grafiği (Kendo Chart) ve ProgressBar ile oran göstergeleri.
+
+---
+
+### Personel Yönetimi
+
+![Personel Yönetimi](docs/screenshots/personel-yonetimi.png)
+
+![Personel Yönetimi — form ve detay](docs/screenshots/personel-yonetimi-1.png)
+
+Kendo Grid ile listeleme, Window içinde ekleme/düzenleme, MultiSelect ile yetkinlik atama ve Upload ile fotoğraf yükleme.
+
+---
+
+### Departman Yönetimi
+
+![Departman Yönetimi](docs/screenshots/departman-yonetimi.png)
+
+![Departman Yönetimi — departman formu](docs/screenshots/departman-yonetimi-1.png)
+
+TreeView ile hiyerarşik departman yapısı, alt departman desteği ve firma bazlı filtreleme.
+
+---
+
+### İzin Yönetimi (Scheduler)
+
+![İzin Yönetimi](docs/screenshots/izin-yonetimi.png)
+
+![İzin Yönetimi — izin formu](docs/screenshots/izin-yonetimi-1.png)
+
+Kendo Scheduler ile takvim görünümü; Bekliyor / Onaylandı / Reddedildi durumları ve izin oluşturma/düzenleme.
+
+---
+
+### Firma Seçimi (Multi-Tenant)
+
+![Firma Seçimi](docs/screenshots/firma-secimi.png)
+
+Üst menüdeki Kendo DropDownList ile aktif firma seçimi; tüm ekranlar seçili firmaya göre filtrelenir.
+
+---
 
 ## Kullanılan Teknolojiler
 
@@ -26,6 +103,9 @@ Tüm kullanıcı arayüzü Türkçedir.
 | FluentValidation | Uygulama katmanı doğrulama |
 | Serilog | Yapılandırılmış loglama |
 | xUnit | Birim testler |
+| Docker Compose | PostgreSQL ve pgAdmin geliştirme ortamı |
+
+---
 
 ## Mimari Yapı
 
@@ -41,6 +121,49 @@ src/
 tests/
   TelerikKendoDemo.Tests/
 ```
+
+### Clean Architecture — Katman Akışı
+
+```mermaid
+flowchart TB
+    Web["Web (MVC)"]
+    Application["Application"]
+    Persistence["Persistence"]
+    DB["PostgreSQL"]
+
+    Web --> Application
+    Application --> Persistence
+    Persistence --> DB
+```
+
+### Katmanlar Arası Bağımlılık
+
+```mermaid
+flowchart BT
+    Web["Web"]
+    Persistence["Persistence"]
+    Application["Application"]
+    Domain["Domain"]
+
+    Web --> Persistence
+    Persistence --> Application
+    Application --> Domain
+```
+
+### Multi-Tenant Veri Akışı
+
+```mermaid
+flowchart LR
+    A["Firma Seçimi\n(DropDownList)"]
+    B["Session"]
+    C["Tenant Context"]
+    D["Repository"]
+    E["PostgreSQL"]
+
+    A --> B --> C --> D --> E
+```
+
+---
 
 ## Katmanlar
 
@@ -71,17 +194,21 @@ tests/
 - Session tabanlı tenant seçimi
 - Kendo UI bileşen entegrasyonu
 
+---
+
 ## Multi Tenant Yapısı
 
 Proje **Shared Database** yaklaşımını kullanır. Tüm firmalar aynı veritabanını paylaşır; iş verileri `TenantId` ile ayrılır.
 
-Örnek firmalar:
+**Örnek firmalar:**
 
 - ABC Holding (varsayılan)
 - XYZ Teknoloji
 - Demo Şirketi
 
 Firma seçimi üst menüdeki **DropDownList** ile yapılır. Seçim oturum süresince saklanır. Tüm grid, grafik ve raporlar yalnızca seçili firmanın verilerini gösterir.
+
+---
 
 ## PostgreSQL Kurulumu (Docker — Önerilen)
 
@@ -197,6 +324,8 @@ CREATE DATABASE "TelerikKendoDemoDb";
 
 Ardından `appsettings.json` içindeki bağlantı dizesini kendi ortamınıza göre düzenleyin.
 
+---
+
 ## Migration İşlemleri
 
 Proje Entity Framework Core migration desteği ile gelir. Migration dosyaları `src/TelerikKendoDemo.Persistence/Migrations` klasöründe yer alır.
@@ -257,6 +386,8 @@ dotnet ef migrations remove --project src/TelerikKendoDemo.Persistence --startup
 ```bash
 dotnet ef migrations list --project src/TelerikKendoDemo.Persistence --startup-project src/TelerikKendoDemo.Web
 ```
+
+---
 
 ## Telerik Bileşenleri
 
@@ -361,34 +492,7 @@ Yeni bir makinede geliştirme ortamı kurarken:
 2. `dotnet restore` ile NuGet paketlerini çekin
 3. Kendo JS/CSS dosyalarını yukarıdaki kaynak klasörden `wwwroot/lib/kendo/` altına kopyalayın
 
-## Ekranlar
-
-### Dashboard
-
-- Toplam / aktif çalışan sayısı
-- Departman sayısı
-- Bekleyen izin talepleri
-- Departman dağılım grafiği
-- ProgressBar ile oran göstergeleri
-
-### Personel Yönetimi
-
-- Kendo Grid ile listeleme
-- Window içinde ekleme/düzenleme
-- MultiSelect ile yetkinlik atama
-- Upload ile fotoğraf yükleme
-
-### Departman Yönetimi
-
-- TreeView ile hiyerarşik görünüm
-- Alt departman desteği
-- Firma filtrelemesi
-
-### İzin Yönetimi
-
-- Scheduler ile takvim görünümü
-- Bekliyor / Onaylandı / Reddedildi durumları
-- Yeni izin oluşturma ve düzenleme
+---
 
 ## Clean Code Yaklaşımı
 
@@ -402,6 +506,8 @@ Yeni bir makinede geliştirme ortamı kurarken:
 - FluentValidation ile ayrıştırılmış doğrulama katmanı
 - Serilog ile yapılandırılmış loglama
 
+---
+
 ## SOLID Prensipleri
 
 | Prensip | Uygulama |
@@ -411,6 +517,8 @@ Yeni bir makinede geliştirme ortamı kurarken:
 | **L** — Liskov Substitution | `IRepository<T>` implementasyonları birbirinin yerine kullanılabilir |
 | **I** — Interface Segregation | Küçük, odaklı servis arayüzleri |
 | **D** — Dependency Inversion | Web katmanı somut sınıflara değil arayüzlere bağımlı |
+
+---
 
 ## Çalıştırma
 
@@ -436,6 +544,8 @@ dotnet run --project src/TelerikKendoDemo.Web
 
 Tarayıcıda `https://localhost:5xxx` adresine gidin. Varsayılan firma **ABC Holding** olarak yüklenir.
 
+---
+
 ## Seed Data
 
 Her firma için otomatik oluşturulan veriler:
@@ -445,8 +555,35 @@ Her firma için otomatik oluşturulan veriler:
 - 30 çalışan
 - 20 izin kaydı
 
-## Testler
+---
+
+## Test Altyapısı
+
+Bu proje referans uygulama amacıyla geliştirildiği için kapsamlı test senaryoları yerine mimari yapı ve entegrasyon örnekleri ön planda tutulmuştur. Buna rağmen test altyapısı hazırlanmış olup servis katmanı için birim testleri genişletilmeye uygundur.
+
+**Mevcut test kapsamı** (`tests/TelerikKendoDemo.Tests`):
+
+| Test | Kapsam |
+|------|--------|
+| `Gecersiz_Email_Dogrulama_Hatasi_Vermeli` | FluentValidation — e-posta doğrulama |
+| `EntityMapper_LeaveRequest_Durum_Metnini_Dogru_Donmeli` | Entity → DTO mapping |
+
+Testleri çalıştırmak için:
 
 ```bash
 dotnet test
 ```
+
+---
+
+## Gelecek Geliştirmeler
+
+- Kimlik Doğrulama ve Yetkilendirme
+- Rol Bazlı Erişim Kontrolü
+- Audit Log
+- Soft Delete
+- CQRS
+- MediatR
+- API Katmanı
+- Docker Compose ile Tam Ortam Kurulumu
+- Kubernetes Deployment Örneği

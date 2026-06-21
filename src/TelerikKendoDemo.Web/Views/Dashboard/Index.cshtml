@@ -1,0 +1,120 @@
+@model DashboardDto
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Dashboard";
+    var chartData = JsonSerializer.Serialize(
+        Model.DepartmentDistribution,
+        new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+}
+
+<div class="page-header mb-4">
+    <h1 class="h3 mb-1">Dashboard</h1>
+    <p class="text-muted mb-0">Seçili firmaya ait özet bilgiler ve grafikler</p>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="card k-card dashboard-stat-card h-100">
+            <div class="card-header fw-semibold">Toplam Çalışan</div>
+            <div class="card-body">
+                <div class="display-4 text-primary">@Model.TotalEmployees</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card k-card dashboard-stat-card h-100">
+            <div class="card-header fw-semibold">Aktif Çalışan</div>
+            <div class="card-body">
+                <div class="display-4 text-success">@Model.ActiveEmployees</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card k-card dashboard-stat-card h-100">
+            <div class="card-header fw-semibold">Departman Sayısı</div>
+            <div class="card-body">
+                <div class="display-4 text-info">@Model.DepartmentCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card k-card dashboard-stat-card h-100">
+            <div class="card-header fw-semibold">Bekleyen İzin Talepleri</div>
+            <div class="card-body">
+                <div class="display-4 text-warning">@Model.PendingLeaveRequests</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="card k-card h-100">
+            <div class="card-header fw-semibold">Departman Dağılımı</div>
+            <div class="card-body">
+                <div id="departmentChart"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card k-card h-100">
+            <div class="card-header fw-semibold">Performans Göstergeleri</div>
+            <div class="card-body">
+                <h6 class="mb-2">Aktif Çalışan Oranı</h6>
+                <div id="activeEmployeeProgress"></div>
+                <h6 class="mt-3 mb-2">İzin Onay Oranı</h6>
+                <div id="leaveApprovalProgress"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $("#departmentChart").kendoChart({
+                legend: { visible: false },
+                seriesDefaults: { type: "column" },
+                series: [{
+                    name: "Çalışan Sayısı",
+                    field: "value",
+                    categoryField: "category",
+                    color: "#007bff"
+                }],
+                categoryAxis: {
+                    field: "category",
+                    labels: { rotation: -45 }
+                },
+                valueAxis: {
+                    title: { text: "Çalışan" },
+                    min: 0,
+                    majorUnit: 1
+                },
+                tooltip: { visible: true, template: "#= value # çalışan" },
+                dataSource: {
+                    data: @Html.Raw(chartData),
+                    schema: {
+                        model: {
+                            fields: {
+                                category: { type: "string" },
+                                value: { type: "number" }
+                            }
+                        }
+                    }
+                }
+            });
+
+            $("#activeEmployeeProgress").kendoProgressBar({
+                type: "percent",
+                value: @Model.ActiveEmployeePercentage.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                showStatus: true
+            });
+
+            $("#leaveApprovalProgress").kendoProgressBar({
+                type: "percent",
+                value: @Model.LeaveApprovalProgress.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                showStatus: true
+            });
+        });
+    </script>
+}

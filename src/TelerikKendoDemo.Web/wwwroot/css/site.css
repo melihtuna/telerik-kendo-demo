@@ -1,0 +1,76 @@
+body {
+    background-color: #f5f7fb;
+}
+
+.page-header h1 {
+    font-weight: 600;
+}
+
+.footer {
+    background-color: #fff;
+}
+
+.employee-photo-preview {
+    max-width: 120px;
+    max-height: 120px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.leave-event {
+    padding: 4px 6px;
+    border-radius: 4px;
+    color: #fff;
+}
+
+.leave-event.status-0 {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.leave-event.status-1 {
+    background-color: #28a745;
+}
+
+.leave-event.status-2 {
+    background-color: #dc3545;
+}
+
+.k-card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.dashboard-stat-card .card-body {
+    display: flex;
+    align-items: center;
+}
+
+#departmentChart {
+    height: 360px;
+}
+
+.k-tilelayout {
+    background: transparent;
+}
+
+.navbar-brand {
+    letter-spacing: 0.5px;
+}
+
+.navbar-dark .nav-link.active {
+    color: #fff;
+    font-weight: 600;
+    cursor: default;
+    pointer-events: none;
+    opacity: 1;
+}
+
+.k-window.app-modal {
+    max-height: calc(100vh - 2rem);
+}
+
+.k-window.app-modal .k-window-content {
+    max-height: calc(100vh - 9rem);
+    overflow-y: auto;
+    box-sizing: border-box;
+}

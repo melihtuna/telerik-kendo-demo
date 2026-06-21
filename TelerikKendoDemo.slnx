@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TelerikKendoDemo.Application/TelerikKendoDemo.Application.csproj" />
+    <Project Path="src/TelerikKendoDemo.Domain/TelerikKendoDemo.Domain.csproj" />
+    <Project Path="src/TelerikKendoDemo.Persistence/TelerikKendoDemo.Persistence.csproj" />
+    <Project Path="src/TelerikKendoDemo.Web/TelerikKendoDemo.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TelerikKendoDemo.Tests/TelerikKendoDemo.Tests.csproj" />
+  </Folder>
+</Solution>

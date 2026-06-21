@@ -1,0 +1,250 @@
+@{
+    ViewData["Title"] = "Personel Yönetimi";
+}
+
+<div class="page-header mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="h3 mb-1">Personel Yönetimi</h1>
+        <p class="text-muted mb-0">Çalışan kayıtlarını görüntüleyin, ekleyin ve düzenleyin</p>
+    </div>
+    <button type="button" class="btn btn-primary" id="btnAddEmployee">Yeni Personel</button>
+</div>
+
+<div id="employeesGrid"></div>
+<div id="employeeWindow"></div>
+
+@section Scripts {
+    <script>
+        var currentPhotoUrl = null;
+
+        function isActiveTemplate(isActive) {
+            return isActive
+                ? '<span class="badge bg-success">Aktif</span>'
+                : '<span class="badge bg-secondary">Pasif</span>';
+        }
+
+        function ensureEmployeeWindow() {
+            return AppModal.ensure("#employeeWindow", {
+                width: "700px",
+                title: "Personel",
+                deactivate: function () {
+                    this.content("");
+                }
+            });
+        }
+
+        function openEmployeeWindow(title, data) {
+            currentPhotoUrl = data ? data.photoUrl : null;
+
+            var window = ensureEmployeeWindow();
+            window.title(title);
+            window.content('<div id="employeeKendoForm"></div>');
+
+            $("#employeeKendoForm").kendoForm({
+                formData: {
+                    id: data ? data.id : null,
+                    firstName: data ? data.firstName : "",
+                    lastName: data ? data.lastName : "",
+                    email: data ? data.email : "",
+                    phone: data ? (data.phone || "") : "",
+                    birthDate: data && data.birthDate ? kendo.parseDate(data.birthDate) : null,
+                    hireDate: data && data.hireDate ? kendo.parseDate(data.hireDate) : null,
+                    departmentId: data ? data.departmentId : null,
+                    skillIds: data ? data.skillIds : [],
+                    isActive: !data || data.isActive
+                },
+                layout: "grid",
+                grid: { cols: 2, gutter: 16 },
+                items: [
+                    { field: "firstName", label: "Ad", validation: { required: true } },
+                    { field: "lastName", label: "Soyad", validation: { required: true } },
+                    { field: "email", label: "E-Posta", validation: { required: true, email: true } },
+                    { field: "phone", label: "Telefon" },
+                    { field: "birthDate", label: "Doğum Tarihi", editor: "DatePicker", validation: { required: true } },
+                    { field: "hireDate", label: "İşe Giriş Tarihi", editor: "DatePicker", validation: { required: true } },
+                    { field: "departmentId", label: "Departman", editor: "DropDownList", editorOptions: {
+                        optionLabel: "Departman seçiniz...",
+                        dataTextField: "name",
+                        dataValueField: "id",
+                        dataSource: { transport: { read: { url: '@Url.Action("GetDepartments", "Employees")', dataType: "json" } } }
+                    }, validation: { required: true } },
+                    { field: "skillIds", label: "Yetkinlikler", editor: "MultiSelect", editorOptions: {
+                        placeholder: "Yetkinlik seçiniz...",
+                        dataTextField: "name",
+                        dataValueField: "id",
+                        dataSource: { transport: { read: { url: '@Url.Action("GetSkills", "Employees")', dataType: "json" } } }
+                    } },
+                    { field: "isActive", label: "Aktif", editor: "Switch" }
+                ],
+                buttonsTemplate: '<div class="k-form-buttons mt-3 text-end">' +
+                    '<button type="button" class="k-button k-button-md k-rounded-md k-button-solid k-button-solid-base me-2" onclick="closeEmployeeWindow()">İptal</button>' +
+                    '<button type="submit" class="k-button k-button-md k-rounded-md k-button-solid k-button-solid-primary">Kaydet</button></div>',
+                submit: function (e) {
+                    e.preventDefault();
+                    saveEmployeeFromForm();
+                }
+            });
+
+            var formContainer = $("#employeeKendoForm");
+            formContainer.append('<div class="mt-3"><label class="k-label">Fotoğraf</label><input name="files" id="photoUpload" type="file" /><div id="photoPreview" class="mt-2"></div></div>');
+
+            $("#photoUpload").kendoUpload({
+                multiple: false,
+                async: {
+                    saveUrl: '@Url.Action("UploadPhoto", "Employees")',
+                    autoUpload: true
+                },
+                success: function (e) {
+                    var response = e.response;
+                    if (response && response.photoUrl) {
+                        currentPhotoUrl = response.photoUrl;
+                        $("#photoPreview").html('<img src="' + response.photoUrl + '" alt="Fotoğraf" class="employee-photo-preview" />');
+                        showNotification('Fotoğraf yüklendi.', 'success');
+                    }
+                },
+                error: function (e) {
+                    showNotification(getErrorMessage(e.XMLHttpRequest), 'error');
+                }
+            });
+
+            if (currentPhotoUrl) {
+                $("#photoPreview").html('<img src="' + currentPhotoUrl + '" alt="Fotoğraf" class="employee-photo-preview" />');
+            }
+
+            AppModal.open(window);
+        }
+
+        function closeEmployeeWindow() {
+            var window = ensureEmployeeWindow();
+            if (window) window.close();
+        }
+
+        function editEmployee(id) {
+            $.get('@Url.Action("GetById", "Employees")', { id: id }, function (data) {
+                openEmployeeWindow('Personel Düzenle', data);
+            }).fail(function (xhr) {
+                showNotification(getErrorMessage(xhr), 'error');
+            });
+        }
+
+        function deleteEmployee(id) {
+            if (!confirm('Bu çalışanı silmek istediğinize emin misiniz?')) return;
+
+            $.post('@Url.Action("Delete", "Employees")', { id: id })
+                .done(function (response) {
+                    showNotification(response.message, 'success');
+                    $("#employeesGrid").data("kendoGrid").dataSource.read();
+                })
+                .fail(function (xhr) {
+                    showNotification(getErrorMessage(xhr), 'error');
+                });
+        }
+
+        function saveEmployeeFromForm() {
+            var form = $("#employeeKendoForm").data("kendoForm");
+            var model = form.options.formData;
+
+            var payload = {
+                id: model.id || null,
+                firstName: model.firstName,
+                lastName: model.lastName,
+                email: model.email,
+                phone: model.phone,
+                birthDate: model.birthDate,
+                hireDate: model.hireDate,
+                departmentId: model.departmentId,
+                skillIds: model.skillIds || [],
+                photoUrl: currentPhotoUrl,
+                isActive: model.isActive
+            };
+
+            var url = payload.id
+                ? '@Url.Action("Update", "Employees")'
+                : '@Url.Action("Create", "Employees")';
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function (response) {
+                    showNotification(response.message, 'success');
+                    closeEmployeeWindow();
+                    $("#employeesGrid").data("kendoGrid").dataSource.read();
+                },
+                error: function (xhr) {
+                    showNotification(getErrorMessage(xhr), 'error');
+                }
+            });
+        }
+
+        function saveEmployee() {
+            saveEmployeeFromForm();
+        }
+
+        $(function () {
+            $("#employeesGrid").kendoGrid({
+                dataSource: {
+                    transport: {
+                        read: { url: '@Url.Action("Read", "Employees")', dataType: "json" }
+                    },
+                    pageSize: 10,
+                    schema: {
+                        model: {
+                            id: "id",
+                            fields: {
+                                fullName: { type: "string" },
+                                email: { type: "string" },
+                                phone: { type: "string" },
+                                departmentName: { type: "string" },
+                                hireDate: { type: "date" },
+                                isActive: { type: "boolean" }
+                            }
+                        }
+                    }
+                },
+                height: 550,
+                sortable: true,
+                filterable: true,
+                groupable: true,
+                pageable: {
+                    refresh: true,
+                    pageSizes: [10, 20, 50]
+                },
+                columnMenu: true,
+                toolbar: ["excel"],
+                excel: {
+                    allPages: true,
+                    fileName: "PersonelListesi.xlsx"
+                },
+                columns: [
+                    { field: "fullName", title: "Ad Soyad" },
+                    { field: "email", title: "E-Posta" },
+                    { field: "phone", title: "Telefon" },
+                    { field: "departmentName", title: "Departman" },
+                    { field: "hireDate", title: "İşe Giriş", format: "{0:dd.MM.yyyy}" },
+                    { field: "isActive", title: "Aktif", template: "#= isActiveTemplate(isActive) #" },
+                    {
+                        title: "İşlemler",
+                        width: 180,
+                        template: "<button class='k-button k-button-md k-rounded-md k-button-solid k-button-solid-base me-1' onclick='editEmployee(\"#= id #\")'>Düzenle</button>" +
+                            "<button class='k-button k-button-md k-rounded-md k-button-solid k-button-solid-base' onclick='deleteEmployee(\"#= id #\")'>Sil</button>"
+                    }
+                ],
+                dataBound: function () {
+                    var grid = this;
+                    grid.tbody.find("tr").each(function () {
+                        var dataItem = grid.dataItem(this);
+                        if (dataItem && !dataItem.isActive) {
+                            $(this).addClass("table-secondary");
+                        }
+                    });
+                }
+            });
+
+            $("#btnAddEmployee").click(function () {
+                openEmployeeWindow('Yeni Personel', null);
+            });
+        });
+    </script>
+}

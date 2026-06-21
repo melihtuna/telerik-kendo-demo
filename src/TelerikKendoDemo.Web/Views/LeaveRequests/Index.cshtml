@@ -1,0 +1,199 @@
+@{
+    ViewData["Title"] = "İzin Yönetimi";
+}
+
+<div class="page-header mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="h3 mb-1">İzin Yönetimi</h1>
+        <p class="text-muted mb-0">Çalışan izin taleplerini takvim üzerinde yönetin</p>
+    </div>
+    <button type="button" class="btn btn-primary" id="btnAddLeave">Yeni İzin Talebi</button>
+</div>
+
+<div id="leaveScheduler"></div>
+<div id="leaveWindow"></div>
+
+<script id="leave-event-template" type="text/x-kendo-template">
+    <div class="leave-event status-#: status #">
+        <strong>#: title #</strong><br />
+        <small>#: employeeName #</small>
+    </div>
+</script>
+
+@section Scripts {
+    <script>
+        function ensureLeaveWindow() {
+            return AppModal.ensure("#leaveWindow", {
+                width: "550px",
+                title: "İzin Talebi",
+                deactivate: function () {
+                    this.content("");
+                }
+            });
+        }
+
+        function openLeaveWindow(title, data) {
+            var window = ensureLeaveWindow();
+            window.title(title);
+
+            var content = `
+                <form class="p-3">
+                    <input type="hidden" id="leaveId" value="${data ? data.id : ''}" />
+                    <div class="mb-3">
+                        <label class="form-label">Çalışan *</label>
+                        <input id="employeeId" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Başlangıç Tarihi *</label>
+                        <input id="startDate" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Bitiş Tarihi *</label>
+                        <input id="endDate" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Durum</label>
+                        <input id="status" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">İzin Nedeni *</label>
+                        <textarea id="reason" class="k-textbox w-100" rows="3">${data ? (data.reason || '') : ''}</textarea>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary me-2" onclick="closeLeaveWindow()">İptal</button>
+                        <button type="button" class="btn btn-primary" onclick="saveLeave()">Kaydet</button>
+                    </div>
+                </form>`;
+
+            window.content(content);
+
+            $("#employeeId").kendoDropDownList({
+                optionLabel: "Çalışan seçiniz...",
+                dataTextField: "name",
+                dataValueField: "id",
+                dataSource: {
+                    transport: {
+                        read: { url: '@Url.Action("GetEmployees", "LeaveRequests")', dataType: "json" }
+                    }
+                },
+                value: data ? data.employeeId : null
+            });
+
+            $("#startDate").kendoDatePicker({
+                format: "dd.MM.yyyy",
+                value: data && data.start ? kendo.parseDate(data.start) : new Date()
+            });
+
+            $("#endDate").kendoDatePicker({
+                format: "dd.MM.yyyy",
+                value: data && data.end ? kendo.parseDate(data.end) : new Date()
+            });
+
+            $("#status").kendoDropDownList({
+                dataTextField: "text",
+                dataValueField: "value",
+                dataSource: [
+                    { text: "Bekliyor", value: 0 },
+                    { text: "Onaylandı", value: 1 },
+                    { text: "Reddedildi", value: 2 }
+                ],
+                value: data ? data.status : 0
+            });
+
+            AppModal.open(window);
+        }
+
+        function closeLeaveWindow() {
+            var window = ensureLeaveWindow();
+            if (window) window.close();
+        }
+
+        function saveLeave() {
+            var model = {
+                id: $("#leaveId").val() || null,
+                employeeId: $("#employeeId").data("kendoDropDownList").value(),
+                startDate: $("#startDate").data("kendoDatePicker").value(),
+                endDate: $("#endDate").data("kendoDatePicker").value(),
+                status: parseInt($("#status").data("kendoDropDownList").value()),
+                reason: $("#reason").val()
+            };
+
+            var url = model.id
+                ? '@Url.Action("Update", "LeaveRequests")'
+                : '@Url.Action("Create", "LeaveRequests")';
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(model),
+                success: function (response) {
+                    showNotification(response.message, 'success');
+                    closeLeaveWindow();
+                    refreshScheduler();
+                },
+                error: function (xhr) {
+                    showNotification(getErrorMessage(xhr), 'error');
+                }
+            });
+        }
+
+        function refreshScheduler() {
+            $("#leaveScheduler").data("kendoScheduler").dataSource.read();
+        }
+
+        $(function () {
+            $("#leaveScheduler").kendoScheduler({
+                date: new Date(),
+                startTime: new Date("2024-01-01 08:00"),
+                height: 650,
+                editable: {
+                    resize: false,
+                    move: false
+                },
+                views: ["month", "week", "day", "agenda"],
+                eventTemplate: kendo.template($("#leave-event-template").html()),
+                dataSource: {
+                    transport: {
+                        read: { url: '@Url.Action("Read", "LeaveRequests")', dataType: "json" }
+                    },
+                    schema: {
+                        model: {
+                            id: "id",
+                            fields: {
+                                title: { from: "title", type: "string" },
+                                start: { from: "start", type: "date" },
+                                end: { from: "end", type: "date" },
+                                employeeId: { from: "employeeId", type: "string" },
+                                employeeName: { from: "employeeName", type: "string" },
+                                reason: { from: "reason", type: "string" },
+                                status: { from: "status", type: "number" }
+                            }
+                        }
+                    }
+                },
+                edit: function (e) {
+                    e.preventDefault();
+                    openLeaveWindow('İzin Talebi Düzenle', e.event);
+                },
+                remove: function (e) {
+                    e.preventDefault();
+                    if (!confirm('Bu izin talebini silmek istediğinize emin misiniz?')) return;
+
+                    $.post('@Url.Action("Delete", "LeaveRequests")', { id: e.event.id })
+                        .done(function (response) {
+                            showNotification(response.message, 'success');
+                            refreshScheduler();
+                        })
+                        .fail(function (xhr) {
+                            showNotification(getErrorMessage(xhr), 'error');
+                        });
+                }
+            });
+
+            $("#btnAddLeave").click(function () {
+                openLeaveWindow('Yeni İzin Talebi', null);
+            });
+        });
+    </script>
+}

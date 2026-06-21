@@ -1,0 +1,251 @@
+﻿<!DOCTYPE html>
+
+<html lang="tr">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - İK Yönetim Sistemi</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet" href="~/lib/kendo/css/default-main.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/kendo/css/font-icons/index.css" asp-append-version="true" />
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+</head>
+
+<body>
+
+    <header>
+
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+
+            <div class="container-fluid">
+
+                <a class="navbar-brand fw-bold" asp-controller="Dashboard" asp-action="Index">TelerikKendoDemo İK</a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+
+                    <span class="navbar-toggler-icon"></span>
+
+                </button>
+
+                <div class="collapse navbar-collapse" id="mainNavbar">
+
+                    @{
+                        var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+                        var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
+                        var navItems = new[]
+                        {
+                            new { Controller = "Dashboard", Action = "Index", Text = "Dashboard" },
+                            new { Controller = "Employees", Action = "Index", Text = "Personel Yönetimi" },
+                            new { Controller = "Departments", Action = "Index", Text = "Departman Yönetimi" },
+                            new { Controller = "LeaveRequests", Action = "Index", Text = "İzin Yönetimi" }
+                        };
+                    }
+
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        @foreach (var item in navItems)
+                        {
+                            var isActive = string.Equals(currentController, item.Controller, StringComparison.OrdinalIgnoreCase)
+                                && string.Equals(currentAction, item.Action, StringComparison.OrdinalIgnoreCase);
+
+                            <li class="nav-item">
+                                @if (isActive)
+                                {
+                                    <span class="nav-link active" aria-current="page">@item.Text</span>
+                                }
+                                else
+                                {
+                                    <a class="nav-link" asp-controller="@item.Controller" asp-action="@item.Action">@item.Text</a>
+                                }
+                            </li>
+                        }
+                    </ul>
+
+                    <div class="d-flex align-items-center gap-2 text-white">
+
+                        <label for="tenantDropdown" class="mb-0">Aktif Firma:</label>
+
+                        <input id="tenantDropdown" style="width: 220px;" />
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </nav>
+
+    </header>
+
+
+
+    <div class="container-fluid py-4">
+
+        <main role="main">
+
+            @RenderBody()
+
+        </main>
+
+    </div>
+
+
+
+    <footer class="border-top footer text-muted py-3 mt-4">
+
+        <div class="container-fluid text-center">
+
+            &copy; @DateTime.Now.Year - TelerikKendoDemo İnsan Kaynakları Yönetim Sistemi
+
+        </div>
+
+    </footer>
+
+
+
+    <span id="notification"></span>
+
+
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="~/lib/kendo/js/kendo.all.min.js" asp-append-version="true"></script>
+
+    <script src="~/lib/kendo/js/kendo.aspnetmvc.min.js" asp-append-version="true"></script>
+
+    @Html.Kendo().ActivateKendoScripts()
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+
+        function onTenantChange() {
+
+            var dropdown = $("#tenantDropdown").data("kendoDropDownList");
+
+            var tenantId = dropdown.value();
+
+            if (!tenantId) return;
+
+
+
+            $.ajax({
+
+                url: '@Url.Action("SetTenant", "Tenant")',
+
+                type: 'POST',
+
+                contentType: 'application/json',
+
+                data: JSON.stringify({ tenantId: tenantId }),
+
+                success: function () {
+
+                    showNotification('Firma değiştirildi. Sayfa yenileniyor...', 'info');
+
+                    setTimeout(function () { window.location.reload(); }, 800);
+
+                },
+
+                error: function (xhr) {
+
+                    showNotification(getErrorMessage(xhr), 'error');
+
+                }
+
+            });
+
+        }
+
+
+
+        function showNotification(message, type) {
+
+            var notification = $("#notification").kendoNotification({
+
+                stacking: "down",
+
+                position: { pinned: true, top: 20, right: 20 }
+
+            }).data("kendoNotification");
+
+
+
+            notification.show(message, type);
+
+        }
+
+
+
+        function getErrorMessage(xhr) {
+
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+
+                return xhr.responseJSON.message;
+
+            }
+
+            return 'İşlem sırasında bir hata oluştu.';
+
+        }
+
+
+
+        $(function () {
+
+            $("#tenantDropdown").kendoDropDownList({
+
+                optionLabel: "Firma Seçiniz",
+
+                dataTextField: "name",
+
+                dataValueField: "id",
+
+                change: onTenantChange,
+
+                dataSource: {
+
+                    transport: {
+
+                        read: { url: '@Url.Action("GetTenants", "Tenant")', dataType: "json" }
+
+                    }
+
+                },
+
+                dataBound: function () {
+
+                    var tenantId = '@Context.Session.GetString(TelerikKendoDemo.Web.Services.TenantSessionKeys.TenantId)';
+
+                    if (tenantId) {
+
+                        this.value(tenantId);
+
+                    }
+
+                }
+
+            });
+
+        });
+
+    </script>
+
+    @Html.Kendo().DeferredScriptFile()
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+
+</html>
+
+

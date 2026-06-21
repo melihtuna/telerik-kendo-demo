@@ -1,6 +1,11 @@
 # TelerikKendoDemo
 
-[build_status_badge] [dotnet8_badge] [postgresql_badge] [telerik_badge] [license_badge]
+![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
+![ASP.NET Core MVC](https://img.shields.io/badge/ASP.NET%20Core-MVC-512BD4?logo=dotnet&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white)
+![Telerik Kendo UI](https://img.shields.io/badge/Telerik-Kendo%20UI-E0234E)
+![Clean Architecture](https://img.shields.io/badge/Mimari-Clean%20Architecture-0078D4)
+![Multi-Tenant](https://img.shields.io/badge/Multi--Tenant-Shared%20Database-2EA043)
 
 > **GitHub portföy referans projesi** — Kurumsal yazılım geliştirme yaklaşımını, **Telerik UI for ASP.NET Core** kullanımını, **PostgreSQL** entegrasyonunu, **multi-tenant** mimariyi ve **Clean Architecture** prensiplerini uçtan uca sergilemek amacıyla geliştirilmiş açık kaynak bir İnsan Kaynakları yönetim uygulamasıdır.
 
@@ -576,14 +581,34 @@ dotnet test
 
 ---
 
-## Gelecek Geliştirmeler
+## Gelecek Geliştirmeler (Yol Haritası)
 
-- Kimlik Doğrulama ve Yetkilendirme
-- Rol Bazlı Erişim Kontrolü
-- Audit Log
-- Soft Delete
-- CQRS
-- MediatR
-- API Katmanı
-- Docker Compose ile Tam Ortam Kurulumu
-- Kubernetes Deployment Örneği
+> **Önemli:** Aşağıdaki maddeler **henüz kod tabanında uygulanmamıştır.** Bu bölüm, referans projenin mevcut kapsamının ötesinde düşünülen olası adımları listeler. Öncelik sırası ve kapsam, projenin evrilmesine göre değişebilir; taahhüt niteliği taşımaz.
+
+Proje şu an **çok firmalı veri izolasyonu, CRUD modülleri, Telerik UI entegrasyonu ve Clean Architecture iskeleti** ile çalışır durumdadır. Yol haritası, bu temeli kurumsal üretim ortamına daha da yaklaştırmayı hedefler.
+
+### Kısa vadeli planlar
+
+| Özellik | Hedef |
+|---------|-------|
+| **Kimlik Doğrulama ve Yetkilendirme** | Kullanıcı oturumu, güvenli giriş/çıkış ve korumalı uç noktalar |
+| **Rol Bazlı Erişim Kontrolü (RBAC)** | Modül ve işlem bazında yetki ayrımı (ör. yalnızca İK yöneticisi onay) |
+| **Audit Log** | Kim, ne zaman, hangi kaydı değiştirdi — izlenebilirlik |
+| **Soft Delete** | Silinen kayıtların mantıksal olarak saklanması ve geri getirilebilmesi |
+
+### Orta vadeli planlar
+
+| Özellik | Hedef |
+|---------|-------|
+| **CQRS** | Okuma ve yazma sorumluluklarının ayrılması; daha ölçeklenebilir servis katmanı |
+| **MediatR** | İstek/yanıt deseni ile controller'ların inceltilmesi |
+| **API Katmanı** | MVC arayüzüne ek olarak REST API ve olası mobil/entegrasyon tüketicileri |
+
+### Uzun vadeli planlar
+
+| Özellik | Hedef |
+|---------|-------|
+| **Docker Compose ile Tam Ortam Kurulumu** | Uygulama + veritabanı + yardımcı servislerin tek komutla ayağa kalkması |
+| **Kubernetes Deployment Örneği** | Bulut ortamına dağıtım, ölçekleme ve operasyonel referans |
+
+Bu maddelerden birini önceliklendirmek veya katkıda bulunmak isterseniz issue açarak tartışmaya başlayabilirsiniz.
